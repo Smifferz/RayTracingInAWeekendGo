@@ -5,6 +5,7 @@ import "go/raytracingweekend/utils"
 type HitRecord struct {
 	p         utils.Point3
 	normal    utils.Vec3
+	material  Material
 	t         float64
 	frontFace bool
 }

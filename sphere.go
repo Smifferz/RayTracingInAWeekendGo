@@ -6,14 +6,16 @@ import (
 )
 
 type Sphere struct {
-	center utils.Point3
-	radius float64
+	center   utils.Point3
+	radius   float64
+	material Material
 }
 
-func NewSphere(cen utils.Point3, r float64) Sphere {
+func NewSphere(cen utils.Point3, r float64, m Material) Sphere {
 	return Sphere{
-		center: cen,
-		radius: r,
+		center:   cen,
+		radius:   r,
+		material: m,
 	}
 }
 
@@ -40,6 +42,7 @@ func (s Sphere) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
 	rec.p = r.At(rec.t)
 	outwardNormal := utils.MinusVec3(rec.p, s.center).Divide(s.radius)
 	rec.SetFaceNormal(r, *outwardNormal)
+	rec.material = s.material
 
 	return true
 }

@@ -160,6 +160,48 @@ func Cross(u Vec3, v Vec3) Vec3 {
 	}
 }
 
+func RandomVec3() Vec3 {
+	return NewVec3(RandomDouble(), RandomDouble(), RandomDouble())
+}
+
+func RandomVec3MinMax(min float64, max float64) Vec3 {
+	return NewVec3(RandomDoubleMinMax(min, max), RandomDoubleMinMax(min, max),
+		RandomDoubleMinMax(min, max))
+}
+
+func RandomInUnitSphere() Vec3 {
+	for {
+		p := RandomVec3MinMax(-1, 1)
+		if p.LengthSquared() >= 1 {
+			continue
+		}
+		return p
+	}
+}
+
+func RandomUnitVector() Vec3 {
+	return RandomInUnitSphere().UnitVector()
+}
+
+func RandomInHemisphere(normal *Vec3) Vec3 {
+	inUnitSphere := RandomInUnitSphere()
+	if Dot(inUnitSphere, *normal) > 0.0 {
+		return inUnitSphere
+	} else {
+		return inUnitSphere.Inverse()
+	}
+}
+
+func Reflect(v Vec3, n Vec3) Vec3 {
+	return MinusVec3(v, *n.Multiply((2 * Dot(v, n))))
+}
+
+func (v Vec3) NearZero() bool {
+	// Return true if the vector is close to zero in all dimensions
+	s := 1e-8
+	return (math.Abs(v.e[0]) < s) && (math.Abs(v.e[1]) < s) && (math.Abs(v.e[2]) < s)
+}
+
 func (v Vec3) UnitVector() Vec3 {
 	return *(v.Divide(v.Length()))
 }

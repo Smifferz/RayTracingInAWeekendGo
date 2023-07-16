@@ -20,10 +20,26 @@ func HitSphere(center utils.Point3, radius float64, r Ray) float64 {
 	}
 }
 
-func RayColor(r *Ray, world Hittable) utils.Color {
+func RayColor(r Ray, world Hittable, depth int) utils.Color {
 	var rec HitRecord
-	if world.Hit(*r, 0, utils.Infinity, &rec) {
-		return (*utils.AddVec3(rec.normal, utils.NewVec3(1, 1, 1)).Multiply(0.5))
+
+	if depth <= 0 {
+		return utils.Color(utils.NewVec3(0, 0, 0))
+	}
+	if world.Hit(r, 0.001, utils.Infinity, &rec) {
+		// Lambertian Diffuse
+		// var target utils.Point3 = utils.AddVec3(rec.p, rec.normal, utils.RandomUnitVector())
+
+		// Hemispherical scattering
+		// var target utils.Point3 = utils.AddVec3(rec.p, utils.RandomInHemisphere(&rec.normal))
+		// nextRay := NewRay(rec.p, utils.MinusVec3(target, rec.p))
+		// return *RayColor(&nextRay, world, depth-1).Multiply(0.5)
+		var scattered Ray
+		var attenuation utils.Color
+		if rec.material.Scatter(r, rec, &attenuation, &scattered) {
+			return utils.MultiplyVec3ByVec3(attenuation, RayColor(scattered, world, depth-1))
+		}
+		return utils.Color(utils.NewVec3(0, 0, 0))
 	}
 	var unitDirection utils.Vec3 = r.Direction().UnitVector()
 	t := 0.5 * (unitDirection.Y() + 1.0)
@@ -44,12 +60,22 @@ func main() {
 	imageWidth := 400
 	imageHeight := int32(float64(imageWidth) / aspectRatio)
 	samplesPerPixel := 100
+	maxDepth := 50
 
 	// World
 	var world HittableList
-	world.Add((NewSphere(utils.NewVec3(0, 0, -1), 0.5)))
-	world.Add(NewSphere(utils.NewVec3(0, -100.5, -1), 100))
 
+	// Materials
+	materialGround := NewLambertian(utils.NewVec3(0.8, 0.8, 0.0))
+	materialCenter := NewLambertian(utils.NewVec3(0.7, 0.3, 0.3))
+	materialLeft := NewMetal(utils.NewVec3(0.8, 0.8, 0.8))
+	materialRight := NewMetal(utils.NewVec3(0.8, 0.6, 0.2))
+
+	// Spheres
+	world.Add(NewSphere(utils.NewVec3(0, -100.5, -1), 100, materialGround))
+	world.Add(NewSphere(utils.NewVec3(0, 0, -1), 0.5, materialCenter))
+	world.Add(NewSphere(utils.NewVec3(-1.0, 0.0, -1.0), 0.5, materialLeft))
+	world.Add(NewSphere(utils.NewVec3(1.0, 0, -1), 0.5, materialRight))
 	// Camera
 	camera := NewCamera()
 
@@ -63,7 +89,7 @@ func main() {
 				u := (float64(i) + utils.RandomDouble()) / float64(imageWidth-1)
 				v := (float64(j) + utils.RandomDouble()) / float64(imageHeight-1)
 				r := camera.GetRay(u, v)
-				pixelColor = utils.AddVec3(pixelColor, RayColor(&r, world))
+				pixelColor = utils.AddVec3(pixelColor, RayColor(r, world, maxDepth))
 			}
 			utils.WriteMultiSampleColor(pixelColor, samplesPerPixel)
 		}

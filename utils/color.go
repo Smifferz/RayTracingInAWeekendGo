@@ -1,6 +1,9 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 func WriteColor(pixelColor Color) {
 	fmt.Printf("%+v %+v %+v\n", int32(255.999*pixelColor.X()),
@@ -15,9 +18,9 @@ func WriteMultiSampleColor(pixelColor Color, samplesPerPixel int) {
 
 	// Divide the color by the number of samples
 	scale := 1.0 / float64(samplesPerPixel)
-	r *= scale
-	g *= scale
-	b *= scale
+	r = math.Sqrt(scale * r)
+	g = math.Sqrt(scale * g)
+	b = math.Sqrt(scale * b)
 
 	// Write the translated [0,255] value of each color component
 	fmt.Printf("%+v %+v %+v\n", int32(256*Clamp(r, 0.0, 0.999)), int32(256*Clamp(g, 0.0, 0.999)), int32(256*Clamp(b, 0.0, 0.999)))
